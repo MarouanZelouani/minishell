@@ -70,5 +70,6 @@ char				*ft_strmapi(char const *s, char (*f)(unsigned int, char));
 void				ft_putendl_fd(char *s, int fd);
 void				ft_putnbr_fd(int n, int fd);
 void				ft_striteri(char *s, void (*f)(unsigned int, char *));
+int					is_space(char c);
 
 #endif
