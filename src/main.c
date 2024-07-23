@@ -71,6 +71,7 @@ char *remove_quote(char *holder, char quote_type)
     return (new);
 }
 
+//CHECK ""
 void handle_quotes(t_token **tokens, char *line, int *iter)
 {
     int i;
@@ -79,7 +80,7 @@ void handle_quotes(t_token **tokens, char *line, int *iter)
     char *holder;
     char quote_type;
 
-    i = 0;
+    i = iter;
     flag = 0;
     while (line[i])
     {
@@ -143,8 +144,8 @@ t_token *tokenizer(char *line)
         if (line[i] == QUOTE || line[i] == DQUOTE)
         {
             printf("found");
-            quote_flag = 1;
-            quote_type = line[i];
+            // quote_flag = 1;
+            // quote_type = line[i];
             if (i == 0 || is_space(line[i - 1]))
             {
                 handle_quotes(&tokens, line, &i);
@@ -179,20 +180,45 @@ t_token *tokenizer(char *line)
             j = i;
             while (line[j])
             {
-                if (quote_flag == 0 && (line[i] == QUOTE || line[i] == DQUOTE))
+                // printf("%c\n", line[j]);
+
+                if (quote_flag == 0 && (line[j] == QUOTE || line[j] == DQUOTE))
                 {
                     quote_flag = 1;
                     quote_type = line[j];
+                    j++;
                 }
-                if (is_space(line[j]) && quote_flag != 1)
+
+                if (is_space(line[j]) && quote_flag == 0)
+                {
+                    printf("space\n");
                     break;
-                else if (quote_flag == 1 && (line[i] == QUOTE || line[i] == DQUOTE))
+                }
+
+
+                if (quote_flag == 1 && line[j] == quote_type)
                 {
                     quote_flag = 0;
-                    break;
+                    if (line[j + 1] && is_space(line[j + 1]))
+                    {
+                        // printf("========\n");
+                        // printf("%c\n", line[j + 1]);
+                        printf("break\n");
+                        j++;
+                        break;
+                    }
                 }
+
+                // if (quote_flag == 1 && line[j + 1] && line[j + 1] == quote_type && (line[j + 2] || is_space(line[j + 2])))
+                // {
+                //     j++;
+                //     printf("quote\n");
+                //     quote_flag = 0;
+                //     break;
+                // }
                 j++;
             }
+            // exit(1);
             // while(line[j] && !is_space(line[j]))
             // {
             //     j++;
