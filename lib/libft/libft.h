@@ -36,7 +36,7 @@ int					ft_isalpha(int c);
 int					ft_atoi(const char *str);
 void				*ft_calloc(size_t b, size_t size);
 char				*ft_strjoin(char const *s1, char const *s2);
-char				*ft_strtrim(char const *s1, char const *set);
+char				*ft_strtrim(char *s1, char *set);
 char				*ft_strnstr(const char *big, const char *little, size_t n);
 int					ft_memcmp(const void *s1, const void *s2, size_t n);
 void				*ft_memchr(const void *s, int c, size_t n);

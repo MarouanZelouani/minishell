@@ -1,7 +1,6 @@
 #ifndef MINISHELL_H
 #define MINISHELL_H 
 
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -11,13 +10,17 @@
 
 # define QUOTE 39
 # define DQUOTE 34
+# define CPIPE 124
+# define GREATER 62
+# define LESS 60
+# define DOLLAR_SIGN 63
 
 typedef enum
 {
     STRING,
     PIPE,
-    LESS,
-    GREATER,
+    I_REDIRECTION,
+    O_REDIRECTION,
     AND,
     OR
 } t_lexeme;

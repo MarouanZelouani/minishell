@@ -1,5 +1,20 @@
 #include "../includes/minishell.h"
 
+t_token	*ft_lstlast_token(t_token *lst)
+{
+	t_token	*node;
+
+	node = NULL;
+	while (lst)
+	{
+		if (lst->next == NULL)
+			node = lst;
+		lst = lst->next;
+	}
+	return (node);
+}
+
+
 void	ft_lstadd_token_back(t_token **lst, t_token *new)
 {
 	t_token	*token;
@@ -18,10 +33,13 @@ void	ft_lstadd_token_back(t_token **lst, t_token *new)
 	}
 }
 
-// t_lexeme get_lexem(char *content)
-// {
-//     if (content)
-// }
+t_lexeme set_lexem(char *content)
+{
+    
+    // set token lexeme
+    // check is special chat insid a string
+    // remove double quote
+}
 
 t_token	*ft_lstnew_token(void *content)
 {
@@ -71,60 +89,30 @@ char *remove_quote(char *holder, char quote_type)
     return (new);
 }
 
-//CHECK ""
-void handle_quotes(t_token **tokens, char *line, int *iter)
+void print_error(char *error, int exit_code)
 {
-    int i;
-    int j;
-    int flag;
-    char *holder;
-    char quote_type;
+    ft_putstr_fd(error, 2);
+    exit(exit_code);
+}
 
-    i = iter;
-    flag = 0;
-    while (line[i])
-    {
-        if (line[i] == QUOTE || line[i] == DQUOTE)
-        {
-            j = i;
-            quote_type = line[i];
-            i++;
-            while (line[i] && line[i] != quote_type)
-                i++;  
-            if (line[i] && line[i] == quote_type)
-            {
-                flag = 1;
-                if (!is_space(line[i + 1]))
-                {
-                    flag = 2;
-                    while (line[i] && !is_space(line[i]))
-                        i++;
-                }
-            }
-            if (flag == 1)
-            {
-                holder = ft_substr(line, j + 1, i - j - 1);
-                ft_lstadd_token_back(tokens, ft_lstnew_token(holder));
-                *iter = i + 1; 
-                return ;
-            }
-            else if (flag == 2)
-            {
-                holder = ft_substr(line, j + 1, i - j - 1);
-                // remove quote from the string
-                holder = remove_quote(holder, quote_type);
-                ft_lstadd_token_back(tokens, ft_lstnew_token(holder));
-                *iter = i + 1; 
-                return ;
-            }
-            else
-            {
-                printf("error\n");
-                exit(1); // no closing quote
-            }
-        }
+int check_for_echo(t_token *tokens)
+{
+    char *holder;
+    int i;
+
+    i = 0;
+    holder = ft_strdup(ft_lstlast_token(tokens)->content);
+    while (holder[i] && (holder[i] != DQUOTE && holder[i] != QUOTE))
         i++;
+    holder = remove_quote(holder, holder[i]);
+    holder = ft_strtrim(holder, " \t\v\n\r\f");
+    if (!ft_strncmp("echo", holder, 4) && ft_strlen(holder) == 4)
+    {
+        free(holder);
+        return 1;
     }
+    free(holder);
+    return 0;
 }
 
 t_token *tokenizer(char *line)
@@ -133,103 +121,79 @@ t_token *tokenizer(char *line)
     char *holder;
     int quote_flag;
     char quote_type;
+    int stop_flag;
     int i;
     int j;
     
     i = 0;
-    quote_flag = 0;
+    stop_flag = 0;
     tokens = NULL;
     while (line[i])
     {
-        if (line[i] == QUOTE || line[i] == DQUOTE)
+        if (tokens != NULL && check_for_echo(tokens))
         {
-            printf("found");
-            // quote_flag = 1;
-            // quote_type = line[i];
-            if (i == 0 || is_space(line[i - 1]))
+            stop_flag = 0;
+            j = i;
+            while (line[i] && stop_flag == 0)
             {
-                handle_quotes(&tokens, line, &i);
-                quote_flag = 0;
+                if (quote_flag == 0  && (line[i] == QUOTE || line[i] == DQUOTE))
+                {
+                    quote_flag = 1;
+                    quote_type = line[i++];
+                }
+                if (quote_flag == 1 && line[i] == quote_type)
+                    quote_flag = 0;
+                if (stop_flag == 0 && (line[i] == CPIPE || line[i] == GREATER
+                    || line[i] == LESS))
+                {
+                    stop_flag = 1;
+                    break;
+                }
+                i++;
             }
+            if (quote_flag == 1)
+                print_error("close quote\n", 1);
+            if (stop_flag == 1)
+                i--;
+            holder = ft_substr(line, j, i - j);
+            // if (ft_strchr(holder, DQUOTE))
+            //     holder = remove_quote(holder, DQUOTE);
+            // else if (ft_strchr(holder, QUOTE))
+            //     holder = remove_quote(holder, QUOTE);
+            ft_lstadd_token_back(&tokens, ft_lstnew_token(holder));
+            
         }
-        // if (line[i] && quote_flag == 1)
-        // {
-        //     printf("handling quotes\n");
-        //     j = i;
-        //     while(line[j] && quote_flag == 1)
-        //     {
-        //         if (line[i] == quote_type)
-        //         {
-        //             quote_flag = 0;
-        //             break;
-        //         }
-        //         j++;
-        //     }
-        //     if (quote_flag == 1)
-        //         exit(1); // quote error
-        //     holder = ft_substr(line, i, j - i);
-        //     if (ft_strchr(holder, DQUOTE))
-        //         holder = remove_quote(holder, DQUOTE);
-        //     else if (ft_strchr(holder, QUOTE))
-        //         holder = remove_quote(holder, QUOTE);
-        //     ft_lstadd_token_back(&tokens, ft_lstnew_token(holder));
-        //     i = j;
-        // }
-        if (line[i] && !is_space(line[i]))
+        else if (line[i] && !is_space(line[i]))
         {
             j = i;
             while (line[j])
             {
-                // printf("%c\n", line[j]);
-
                 if (quote_flag == 0 && (line[j] == QUOTE || line[j] == DQUOTE))
                 {
                     quote_flag = 1;
                     quote_type = line[j];
                     j++;
                 }
-
-                if (is_space(line[j]) && quote_flag == 0)
-                {
-                    printf("space\n");
-                    break;
-                }
-
-
                 if (quote_flag == 1 && line[j] == quote_type)
                 {
                     quote_flag = 0;
                     if (line[j + 1] && is_space(line[j + 1]))
                     {
-                        // printf("========\n");
-                        // printf("%c\n", line[j + 1]);
-                        printf("break\n");
                         j++;
                         break;
                     }
                 }
-
-                // if (quote_flag == 1 && line[j + 1] && line[j + 1] == quote_type && (line[j + 2] || is_space(line[j + 2])))
-                // {
-                //     j++;
-                //     printf("quote\n");
-                //     quote_flag = 0;
-                //     break;
-                // }
+                if (is_space(line[j]) && quote_flag == 0)
+                    break;
                 j++;
             }
-            // exit(1);
-            // while(line[j] && !is_space(line[j]))
-            // {
-            //     j++;
-            // }
             if (quote_flag == 1)
-                exit(1); // quote close
+                print_error("close quote\n", 1); // quote close
             holder = ft_substr(line, i, j - i);
-            if (ft_strchr(holder, DQUOTE))
-                holder = remove_quote(holder, DQUOTE);
-            else if (ft_strchr(holder, QUOTE))
-                holder = remove_quote(holder, QUOTE);
+            // if (ft_strchr(holder, DQUOTE))
+            //     holder = remove_quote(holder, DQUOTE);
+            // else if (ft_strchr(holder, QUOTE))
+            //     holder = remove_quote(holder, QUOTE);
             ft_lstadd_token_back(&tokens, ft_lstnew_token(holder));
             i = j;
         }
@@ -238,49 +202,138 @@ t_token *tokenizer(char *line)
     return (tokens);
 }
 
-// void check_quote(char *line)
-// {
-//     // parse quotes
-// }
+int count_repetition(char *line, char c, int itr)
+{
+    int i;
+    int count;
 
-// char *quotes_handling(char *line)
-// {
-//     char *new;
-//     int i;
+    i = itr;
+    count = 0;
+    while (line[i])
+    {
+        if (line[i] == c)
+            count++;
+        else 
+            break;
+        i++;
+    }
+    return count;
+}
 
-//     i = 0;
-//     while (line[i])
-//     {
-//         if (line[i] == QUOTE || line[i] == DQUOTE)
-//         {
-//             if (line[i] == DQUOTE)
-//             {
+int count_special_chars(char *line)
+{
+    int count;
+    int flag;
+    int i;
 
-//             }
-//             else if (line[i] == QUOTE)
-//             {
+    i = 0;
+    flag = 0;
+    count = 0;
+    while(line[i])
+    {
+        if (flag == 0 && (line[i] == DQUOTE ||  line[i] == QUOTE))
+            flag = 1;
+        else if (flag == 1 && (line[i] == DQUOTE ||  line[i] == QUOTE))
+            flag = 0;
 
-//             }
-//         }
-//         i++;
-//     }
-//     return new;
-// }
+        if (flag == 0 && (line[i] == CPIPE || line[i] == GREATER
+            || line[i] == LESS))
+        {
+            if (line[i] == GREATER)
+            {
+                if (count_repetition(line, line[i], i) > 2)
+                    print_error("parse error\n", 1);
+                else if (line[i + 1] && line[i + 1] == LESS)
+                    print_error("parse error\n", 1);
+                else if (count_repetition(line, line[i], i) == 2)
+                    count++;
+                else if (line[i - 1] != GREATER)
+                    count++;
+            }
+            else if (line[i] == LESS)
+            {
+                if (count_repetition(line, line[i], i) > 2)
+                    print_error("parse error\n", 1);
+                else if (line[i + 1] && line[i + 1] == GREATER)
+                    print_error("parse error\n", 1);
+                else if (count_repetition(line, line[i], i) == 2)
+                    count ++;
+                else if (line[i - 1] != LESS)
+                    count++;
+            }
+            else if (line[i] == CPIPE)
+            {
+                if (count_repetition(line, line[i], i) > 2)
+                    print_error("parse error\n", 1);
+                else if (count_repetition(line, line[i], i) == 2)
+                    count ++;
+                else if (line[i - 1] != CPIPE)
+                    count++;
+            }
+        }
+        i++;
+    }
+    return count;
+}
 
-// void initial_parsing(char *line)
-// {
-//     char *new;
-//     int i;
+char *modify_line(char *line)
+{
+    int i;
+    int j;
+    int flag;
+    char *new_line;
 
+    i = 0;
+    j = 0;
+    flag = 0;
+    new_line = malloc(sizeof(char) * (ft_strlen(line) + count_special_chars(line) * 2 + 1));
+    if (new_line == NULL)
+        return NULL;
+    while (line[i])
+    {
+        if (flag == 0 && (line[i] == DQUOTE ||  line[i] == QUOTE))
+            flag = 1;
+        else if (flag == 1 && (line[i] == DQUOTE ||  line[i] == QUOTE))
+            flag = 0;
+        if (flag == 0 && (line[i] == CPIPE || line[i] == GREATER
+            || line[i] == LESS))
+        {
+            new_line[j++] = ' ';
+            if (line[i + 1] && line[i + 1] != line[i] && line[i - 1] != line[i])
+                new_line[j++] = line[i];
+            else
+            {
+                new_line[j++] = line[i++];
+                new_line[j++] = line[i];
+            }
+            new_line[j] = ' ';
+        }
+        else 
+            new_line[j] = line[i];
+        i++;
+        j++;
+    }
+    new_line[j] = '\0';
+    free(line);
+    return new_line;
+}
 
-//     i = 0;
-//     while (line[i])
-//     {
-//         if (line[i] == QUOTE || line[i] == DQUOTE)
-//             new = quotes_handling(line);
-//         i++;
-//     }
-// }
+void initial_parsing(char *line)
+{
+    int i;
+
+    i = 0;
+    while (line[i] && is_space(line[i]))
+        i++;
+    if(line[i] && line[i] == CPIPE)
+        print_error("parse error\n", 1);
+    while(line[i++]);
+    i -= 2;
+    while (i >= 0 && is_space(line[i]))
+        i--;
+    if (line[i] == CPIPE || line[i] == GREATER || line[i] == LESS)
+        print_error("parse error\n", 1);
+}
 
 int main (int ac, char **av)
 {
@@ -292,11 +345,12 @@ int main (int ac, char **av)
     while (1)
     {
         line = readline("-> ");
-        // initial_parsing(line);
+        initial_parsing(line);
+        line = modify_line(line);
         tokens = tokenizer(line);
         print_lst(tokens);
         // printf("%s\n", line);
-        exit(1);
+        // exit(1);
         free(line);
     }   
     return (0);
