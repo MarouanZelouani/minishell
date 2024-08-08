@@ -2,9 +2,9 @@ NAME = minishell
 CC = cc
 LIBFT_DIR = ./lib/libft
 LIBFT = $(LIBFT_DIR)/libft.a
-FLAGS = -Wall -Wextra -Werror
-SRC = ./src/main.c
-
+FLAGS = -Wall -Wextra -Werror -g
+SRC = ./src/tree.c
+		
 OBJ = $(SRC:.c=.o)
 
 all: $(NAME)

@@ -33,12 +33,37 @@ void	ft_lstadd_token_back(t_token **lst, t_token *new)
 	}
 }
 
-t_lexeme set_lexem(char *content)
+// set token lexeme
+// check is special chat insid a string
+// remove double quote
+t_lexeme set_lexeme(char *content)
 {
-    
-    // set token lexeme
-    // check is special chat insid a string
-    // remove double quote
+    char *holder;
+    int i;
+
+    i = 0;
+    holder = ft_strdup(content);
+    holder = ft_strtrim(holder, " \t\v\n\r\f");
+    if (ft_strlen(holder) == 2)
+    {
+        if (holder[0] == CPIPE)
+            return (OR);
+        else if (holder[0] == LESS && holder[1] == LESS)
+            return (APPEND);
+        else if (holder[0] == GREATER && holder[1] == GREATER)
+            return (HERDOC);
+    }
+    else if (ft_strlen(holder) == 1)
+    {
+        if (holder[0] == CPIPE)
+            return (PIPE);
+        else if (holder[0] == LESS)
+            return (I_REDIRECTION);
+        else if (holder[0] == GREATER)
+            return (O_REDIRECTION);
+    }
+    free(holder);
+    return STRING;
 }
 
 t_token	*ft_lstnew_token(void *content)
@@ -105,6 +130,7 @@ int check_for_echo(t_token *tokens)
     while (holder[i] && (holder[i] != DQUOTE && holder[i] != QUOTE))
         i++;
     holder = remove_quote(holder, holder[i]);
+    // dont remove spaces
     holder = ft_strtrim(holder, " \t\v\n\r\f");
     if (!ft_strncmp("echo", holder, 4) && ft_strlen(holder) == 4)
     {
@@ -155,12 +181,22 @@ t_token *tokenizer(char *line)
                 print_error("close quote\n", 1);
             if (stop_flag == 1)
                 i--;
-            holder = ft_substr(line, j, i - j);
+            if (i != j)
+            {
+                holder = ft_substr(line, j, i - j);
+                if (holder != NULL)
+                {
+                    ft_lstadd_token_back(&tokens, ft_lstnew_token(holder));
+                    printf("%s\n", holder);
+                }
+                // i = j;
+            }
+            // holder = ft_substr(line, j, i - j);
             // if (ft_strchr(holder, DQUOTE))
             //     holder = remove_quote(holder, DQUOTE);
             // else if (ft_strchr(holder, QUOTE))
             //     holder = remove_quote(holder, QUOTE);
-            ft_lstadd_token_back(&tokens, ft_lstnew_token(holder));
+            // ft_lstadd_token_back(&tokens, ft_lstnew_token(holder));
             
         }
         else if (line[i] && !is_space(line[i]))
@@ -189,13 +225,20 @@ t_token *tokenizer(char *line)
             }
             if (quote_flag == 1)
                 print_error("close quote\n", 1); // quote close
-            holder = ft_substr(line, i, j - i);
+            if (i != j)
+            {
+                holder = ft_substr(line, i, j - i);
+                if (holder != NULL)
+                {
+                    ft_lstadd_token_back(&tokens, ft_lstnew_token(holder));
+                    printf("%s\n", holder);
+                }
+            }
+            i = j;
             // if (ft_strchr(holder, DQUOTE))
             //     holder = remove_quote(holder, DQUOTE);
             // else if (ft_strchr(holder, QUOTE))
             //     holder = remove_quote(holder, QUOTE);
-            ft_lstadd_token_back(&tokens, ft_lstnew_token(holder));
-            i = j;
         }
         i++;
     }
@@ -348,7 +391,7 @@ int main (int ac, char **av)
         initial_parsing(line);
         line = modify_line(line);
         tokens = tokenizer(line);
-        print_lst(tokens);
+        // print_lst(tokens);
         // printf("%s\n", line);
         // exit(1);
         free(line);
