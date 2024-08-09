@@ -1,0 +1,29 @@
+COMMAND : 
+    ls -al | grep .. | wc -l > file
+
+AST :
+    => PIPELINE
+        => PIPELINE
+            => COMMAND
+                => ARGUMENTS (ls -al)
+            => COMMAND
+                => ARGUMENTS (grep ..)
+        => COMMAND
+            => ARGUMENTS (wc -l)
+            =>  REDIRECTION (> file)
+
+AST NODES TYPE:
+    => PIPELINE 
+        -> COMMAND
+        -> PIPELINE
+
+    => COMMAND
+        -> ARGUMENTS
+        -> REDIRECTION
+
+    => REDIRECTION
+        -> REDIRECTION
+        -> ARGUMENTS
+
+    => ARGUMENTS
+        -> NULL

@@ -2,7 +2,7 @@ NAME = minishell
 CC = cc
 LIBFT_DIR = ./lib/libft
 LIBFT = $(LIBFT_DIR)/libft.a
-FLAGS = -Wall -Wextra -Werror -g
+FLAGS = -Wall -Wextra -Werror -g #-fsanitize=address
 SRC = ./src/tree.c
 		
 OBJ = $(SRC:.c=.o)
